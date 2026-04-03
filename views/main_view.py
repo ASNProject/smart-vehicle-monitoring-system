@@ -13,7 +13,8 @@ class MainView(tk.Tk):
         super().__init__()
 
         self.title("SMART DETECTION")
-        self.geometry("520x650")
+        # self.geometry("520x650")
+        self.attributes("-fullscreen", True)
         self.configure(bg="#F5F6FA")
 
         self.controller = DetectionController()
@@ -25,13 +26,16 @@ class MainView(tk.Tk):
         )
 
         self.cam_label = Label(self, width=480, height=320, bg="black")
-        self.cam_label.pack(pady=10)
+        # self.cam_label.pack(pady=10)
+        self.cam_label.pack(pady=5, fill="both", expand=True)
 
         self.card_container = Frame(self, bg="#F5F6FA")
-        self.card_container.pack(pady=10, padx=20, fill="x")
+        # self.card_container.pack(pady=10, padx=20, fill="x")
+        self.card_container.pack(pady=5, padx=10, fill="both", expand=True)
 
         self.card_container.grid_columnconfigure(0, weight=1)
         self.card_container.grid_columnconfigure(1, weight=1)
+        self.card_container.grid_rowconfigure(0, weight=1)
 
         self.yolo_frame = Frame(self.card_container, bg="white", bd=1, relief="solid")
         self.yolo_frame.grid(row=0, column=0, padx=5, sticky="nsew")
@@ -74,23 +78,13 @@ class MainView(tk.Tk):
         self.gps_label.pack(pady=5)
 
         self.button_frame = Frame(self, bg="#F5F6FA")
-        self.button_frame.pack(pady=10)
+        # self.button_frame.pack(pady=10)
+        self.button_frame.pack(pady=5, fill="x")
 
-        Button(self.button_frame,
-               text="A",
-               width=10,
-               height=2,
-               bg="#27AE60",
-               fg="white",
-               command=self.send_a).pack(side=LEFT, padx=10)
-
-        Button(self.button_frame,
-               text="B",
-               width=10,
-               height=2,
-               bg="#2980B9",
-               fg="white",
-               command=self.send_b).pack(side=LEFT, padx=10)
+        Button(self.button_frame, text="A", bg="#27AE60", fg="white",
+               command=self.send_a).pack(side=LEFT, padx=5, expand=True, fill="x")
+        Button(self.button_frame, text="B", bg="#2980B9", fg="white",
+               command=self.send_b).pack(side=LEFT, padx=5, expand=True, fill="x")
 
         self.last_label = "-"
         self.last_distance = "-"
@@ -110,7 +104,12 @@ class MainView(tk.Tk):
         frame, info = self.controller.get_frame()
 
         if frame is not None:
-            frame = cv2.resize(frame, (480, 320))
+            # frame = cv2.resize(frame, (480, 320))
+            width = self.cam_label.winfo_width()
+            height = self.cam_label.winfo_height()
+
+            if width > 0 and height > 0:
+                frame = cv2.resize(frame, (width, height))
 
             img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             img = Image.fromarray(img)
