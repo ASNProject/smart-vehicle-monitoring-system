@@ -3,7 +3,7 @@ from ultralytics import YOLO
 
 
 # KALIBRASI BAGIAN INI
-def estimate_distance(pixel_width, real_width=1.8, focal=222):
+def estimate_distance(pixel_width, real_width=0.15, focal=152):
     if pixel_width == 0:
         return 0
     return (real_width * focal) / pixel_width
