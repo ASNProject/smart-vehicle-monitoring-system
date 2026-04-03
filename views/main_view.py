@@ -19,7 +19,7 @@ class MainView(tk.Tk):
         self.controller = DetectionController()
 
         self.serial = SerialReader(
-            port="/dev/seria10",
+            port="/dev/serial0",
             baudrate=115200,
             callback=self.handle_serial_data
         )
