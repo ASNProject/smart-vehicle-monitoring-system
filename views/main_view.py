@@ -19,29 +19,20 @@ class MainView(tk.Tk):
         self.controller = DetectionController()
 
         self.serial = SerialReader(
-            port="/dev/serial10",
+            port="/dev/seria10",
             baudrate=115200,
             callback=self.handle_serial_data
         )
 
-        # =========================
-        # 📷 CAMERA
-        # =========================
         self.cam_label = Label(self, width=480, height=320, bg="black")
         self.cam_label.pack(pady=10)
 
-        # =========================
-        # 🔥 CARD CONTAINER
-        # =========================
         self.card_container = Frame(self, bg="#F5F6FA")
         self.card_container.pack(pady=10, padx=20, fill="x")
 
         self.card_container.grid_columnconfigure(0, weight=1)
         self.card_container.grid_columnconfigure(1, weight=1)
 
-        # =========================
-        # 🚗 YOLO CARD
-        # =========================
         self.yolo_frame = Frame(self.card_container, bg="white", bd=1, relief="solid")
         self.yolo_frame.grid(row=0, column=0, padx=5, sticky="nsew")
 
@@ -65,9 +56,6 @@ class MainView(tk.Tk):
                                    bg="white")
         self.distance_label.pack(pady=5)
 
-        # =========================
-        # 📍 GPS CARD
-        # =========================
         self.gps_frame = Frame(self.card_container, bg="white", bd=1, relief="solid")
         self.gps_frame.grid(row=0, column=1, padx=5, sticky="nsew")
 
@@ -85,9 +73,6 @@ class MainView(tk.Tk):
                               justify=LEFT)
         self.gps_label.pack(pady=5)
 
-        # =========================
-        # 🔘 BUTTON
-        # =========================
         self.button_frame = Frame(self, bg="#F5F6FA")
         self.button_frame.pack(pady=10)
 
@@ -107,9 +92,6 @@ class MainView(tk.Tk):
                fg="white",
                command=self.send_b).pack(side=LEFT, padx=10)
 
-        # =========================
-        # 🔥 CACHE VALUE (FIX UTAMA)
-        # =========================
         self.last_label = "-"
         self.last_distance = "-"
 
@@ -124,9 +106,6 @@ class MainView(tk.Tk):
     def send_b(self):
         self.serial.send_raw("B")
 
-    # =========================
-    # 📷 CAMERA LOOP
-    # =========================
     def update_camera(self):
         frame, info = self.controller.get_frame()
 
@@ -143,9 +122,6 @@ class MainView(tk.Tk):
             label = info.get("label")
             distance = info.get("distance")
 
-            # =========================
-            # 🔥 FIX: JANGAN HILANGIN DATA
-            # =========================
             if label is not None and distance is not None:
                 self.last_label = label.upper()
                 self.last_distance = f"{distance:.2f} meter"
