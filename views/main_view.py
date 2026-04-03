@@ -16,7 +16,7 @@ class MainView(tk.Tk):
         # self.geometry("800x480")
         # self.attributes("-fullscreen", True)
 
-        self.attributes("zoomed", True)
+        self.attributes("-zoomed", True)
         self.configure(bg="#F5F6FA")
 
         self.controller = DetectionController()
