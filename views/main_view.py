@@ -13,8 +13,8 @@ class MainView(tk.Tk):
         super().__init__()
 
         self.title("SMART DETECTION")
-        # self.geometry("520x650")
-        self.attributes("-fullscreen", True)
+        self.geometry("1024x480")
+        # self.attributes("-fullscreen", True)
         self.configure(bg="#F5F6FA")
 
         self.controller = DetectionController()
@@ -81,10 +81,21 @@ class MainView(tk.Tk):
         # self.button_frame.pack(pady=10)
         self.button_frame.pack(pady=5, fill="x")
 
-        Button(self.button_frame, text="A", bg="#27AE60", fg="white",
-               command=self.send_a).pack(side=LEFT, padx=5, expand=True, fill="x")
-        Button(self.button_frame, text="B", bg="#2980B9", fg="white",
-               command=self.send_b).pack(side=LEFT, padx=5, expand=True, fill="x")
+        Button(self.button_frame,
+               text="A",
+               width=10,
+               height=2,
+               bg="#27AE60",
+               fg="white",
+               command=self.send_a).pack(side=LEFT, padx=10)
+
+        Button(self.button_frame,
+               text="B",
+               width=10,
+               height=2,
+               bg="#2980B9",
+               fg="white",
+               command=self.send_b).pack(side=LEFT, padx=10)
 
         self.last_label = "-"
         self.last_distance = "-"
