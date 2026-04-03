@@ -13,10 +13,10 @@ class MainView(tk.Tk):
         super().__init__()
 
         self.title("SMART DETECTION")
-        # self.geometry("800x480")
+        self.geometry("800x800")
         # self.attributes("-fullscreen", True)
 
-        self.attributes("-zoomed", True)
+        # self.attributes("-zoomed", True)
         self.configure(bg="#F5F6FA")
 
         self.controller = DetectionController()
