@@ -2,10 +2,12 @@ import cv2
 from ultralytics import YOLO
 
 
-# KALIBRASI BAGIAN INI
+# =========================
+# 📏 DISTANCE FUNCTION
+# =========================
 def estimate_distance(pixel_width, real_width=0.15, focal=152):
-    if pixel_width == 0:
-        return 0
+    if pixel_width <= 0:
+        return None  # 🔥 lebih aman dari 0 palsu
     return (real_width * focal) / pixel_width
 
 
@@ -13,26 +15,18 @@ class DetectionController:
     def __init__(self):
         self.model = YOLO("yolov8n.pt")
 
-        self.cam1 = cv2.VideoCapture(0)
-        self.cam2 = cv2.VideoCapture(1)
+        # 1 kamera
+        self.cam = cv2.VideoCapture(0)
 
-        self.cam1.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        self.cam1.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-
-        self.cam2.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        self.cam2.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-
-        self.car_count = 0
-        self.motor_count = 0
+        # resolusi ringan
+        self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 480)
+        self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 320)
 
     def process_frame(self, frame):
-        car_count = 0
-        motor_count = 0
+        nearest_obj = None
+        min_distance = float("inf")
 
-        car_distances = []
-        motor_distances = []
-
-        results = self.model(frame)
+        results = self.model(frame, verbose=False)
 
         for r in results:
             for box in r.boxes:
@@ -42,48 +36,48 @@ class DetectionController:
                 if label in ['car', 'motorcycle']:
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
                     width = x2 - x1
-                    print("pixel width", width)
 
                     distance = estimate_distance(width)
 
-                    if label == "car":
-                        car_count += 1
-                        car_distances.append(distance)
-                    else:
-                        motor_count += 1
-                        motor_distances.append(distance)
+                    if distance is None:
+                        continue
 
-                    text = f"{label} {distance:.2f}m"
+                    # cari paling dekat
+                    if distance < min_distance:
+                        min_distance = distance
+                        nearest_obj = {
+                            "label": label,
+                            "distance": distance,
+                            "bbox": (x1, y1, x2, y2)
+                        }
 
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                    cv2.putText(frame, text, (x1, y1),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.6,
-                                (0, 255, 0), 2)
+        info = {"label": None, "distance": None}
 
-        return frame, car_count, motor_count, car_distances, motor_distances
+        if nearest_obj:
+            x1, y1, x2, y2 = nearest_obj["bbox"]
+            label = nearest_obj["label"]
+            distance = nearest_obj["distance"]
 
-    def get_frames(self):
-        ret1, frame1 = self.cam1.read()
-        ret2, frame2 = self.cam2.read()
+            text = f"{label} {distance:.1f}m"
 
-        info1 = {
-            "car_distances": [],
-            "motor_distances": []
-        }
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
+            cv2.putText(frame, text, (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7,
+                        (0, 0, 255), 2)
 
-        info2 = {
-            "car_distances": [],
-            "motor_distances": []
-        }
+            info["label"] = label
+            info["distance"] = distance
 
-        if ret1:
-            frame1, _, _, cd1, md1 = self.process_frame(frame1)
-            info1["car_distances"] = cd1
-            info1["motor_distances"] = md1
+        return frame, info
 
-        if ret2:
-            frame2, _, _, cd2, md2 = self.process_frame(frame2)
-            info2["car_distances"] = cd2
-            info2["motor_distances"] = md2
+    def get_frame(self):
+        ret, frame = self.cam.read()
 
-        return frame1, frame2, info1, info2
+        info = {"label": None, "distance": None}
+
+        if not ret:
+            return None, info
+
+        frame, info = self.process_frame(frame)
+
+        return frame, info

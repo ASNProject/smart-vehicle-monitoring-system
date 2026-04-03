@@ -1,141 +1,178 @@
-# Copyright 2025 ariefsetyonugroho
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#     https://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import tkinter as tk
 from tkinter import *
-
 import cv2
-
-from core import config
-from controllers.detection_controller import DetectionController
-from core.utils import center_window
 from PIL import Image, ImageTk
+import time
+
+from controllers.detection_controller import DetectionController
+from core.serial_reader import SerialReader
 
 
 class MainView(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.title(config.APP_TITLE)
-        self.geometry(config.WINDOW_SIZE)
-        self.configure(bg=config.THEME_COLOR)
+        self.title("SMART DETECTION")
+        self.geometry("520x650")
+        self.configure(bg="#F5F6FA")
 
         self.controller = DetectionController()
 
-        center_window(self)
+        self.serial = SerialReader(
+            port="/dev/cu.usbserial-110",
+            baudrate=115200,
+            callback=self.handle_serial_data
+        )
 
-        # MAIN FRAME
-        self.main_frame = Frame(self, bg=config.THEME_COLOR)
-        self.main_frame.pack(fill=BOTH, expand=True)
+        # =========================
+        # 📷 CAMERA
+        # =========================
+        self.cam_label = Label(self, width=480, height=320, bg="black")
+        self.cam_label.pack(pady=10)
 
-        # TOP FRAME
-        self.top_frame = Frame(self.main_frame, bg=config.THEME_COLOR)
-        self.top_frame.pack(side=TOP, fill=X)
-        self.top_frame.grid_columnconfigure(0, weight=1)
-        self.top_frame.grid_columnconfigure(1, weight=1)
+        # =========================
+        # 🔥 CARD CONTAINER
+        # =========================
+        self.card_container = Frame(self, bg="#F5F6FA")
+        self.card_container.pack(pady=10, padx=20, fill="x")
 
-        # Kamera 1 (Kiri)
-        self.cam1_label = Label(self.top_frame)
-        self.cam1_label.grid(row=0, column=0, padx=10, pady=10)
+        self.card_container.grid_columnconfigure(0, weight=1)
+        self.card_container.grid_columnconfigure(1, weight=1)
 
-        # Kamera 2 (Kanan)
-        self.cam2_label = Label(self.top_frame)
-        self.cam2_label.grid(row=0, column=1, padx=10, pady=10)
+        # =========================
+        # 🚗 YOLO CARD
+        # =========================
+        self.yolo_frame = Frame(self.card_container, bg="white", bd=1, relief="solid")
+        self.yolo_frame.grid(row=0, column=0, padx=5, sticky="nsew")
 
-        # BOTTOM FRAME (INFO)
-        self.bottom_frame = Frame(self.main_frame, bg=config.THEME_COLOR)
-        self.bottom_frame.pack(side=TOP, fill=X, anchor="n")
+        Label(self.yolo_frame,
+              text="OBJEK TERDEKAT",
+              font=("Arial", 12, "bold"),
+              fg="#2E86DE",
+              bg="white").pack(pady=5)
 
-        Label(self.bottom_frame, text="INFO",
-              fg="black",
-              bg=config.THEME_COLOR,
-              font=("Arial", 16, "bold")).pack(pady=5)
+        self.object_label = Label(self.yolo_frame,
+                                 text="-",
+                                 font=("Arial", 16, "bold"),
+                                 fg="#2E86DE",
+                                 bg="white")
+        self.object_label.pack()
 
-        self.info_frame = Frame(self.bottom_frame, bg=config.THEME_COLOR)
-        self.info_frame.pack(anchor="n")
+        self.distance_label = Label(self.yolo_frame,
+                                   text="-",
+                                   font=("Arial", 12),
+                                   fg="#2E86DE",
+                                   bg="white")
+        self.distance_label.pack(pady=5)
 
-        self.info_left = Label(self.info_frame,
-                               text="",
-                               justify=LEFT,
-                               anchor="n",  # 🔥 ini penting
-                               fg="black",
-                               bg=config.THEME_COLOR,
-                               font=("Arial", 12))
-        self.info_left.grid(row=0, column=0, padx=20, sticky="n")
+        # =========================
+        # 📍 GPS CARD
+        # =========================
+        self.gps_frame = Frame(self.card_container, bg="white", bd=1, relief="solid")
+        self.gps_frame.grid(row=0, column=1, padx=5, sticky="nsew")
 
-        self.info_right = Label(self.info_frame,
-                                text="",
-                                justify=LEFT,
-                                anchor="n",  # 🔥 ini penting
-                                fg="black",
-                                bg=config.THEME_COLOR,
-                                font=("Arial", 12))
-        self.info_right.grid(row=0, column=1, padx=20, sticky="n")
+        Label(self.gps_frame,
+              text="GPS DATA",
+              font=("Arial", 12, "bold"),
+              fg="#2E86DE",
+              bg="white").pack(pady=5)
+
+        self.gps_label = Label(self.gps_frame,
+                              text="Menunggu data...",
+                              font=("Arial", 10),
+                              fg="#2E86DE",
+                              bg="white",
+                              justify=LEFT)
+        self.gps_label.pack(pady=5)
+
+        # =========================
+        # 🔘 BUTTON
+        # =========================
+        self.button_frame = Frame(self, bg="#F5F6FA")
+        self.button_frame.pack(pady=10)
+
+        Button(self.button_frame,
+               text="A",
+               width=10,
+               height=2,
+               bg="#27AE60",
+               fg="white",
+               command=self.send_a).pack(side=LEFT, padx=10)
+
+        Button(self.button_frame,
+               text="B",
+               width=10,
+               height=2,
+               bg="#2980B9",
+               fg="white",
+               command=self.send_b).pack(side=LEFT, padx=10)
+
+        # =========================
+        # 🔥 CACHE VALUE (FIX UTAMA)
+        # =========================
+        self.last_label = "-"
+        self.last_distance = "-"
+
+        self.last_send = 0
 
         self.update_camera()
 
-        self.cam1_label = Label(self.top_frame, width=320, height=240, bg="black")
-        self.cam1_label.grid(row=0, column=0, padx=10, pady=10)
+    # =========================
+    def send_a(self):
+        self.serial.send_raw("A")
 
-        self.cam2_label = Label(self.top_frame, width=320, height=240, bg="black")
-        self.cam2_label.grid(row=0, column=1, padx=10, pady=10)
+    def send_b(self):
+        self.serial.send_raw("B")
 
+    # =========================
+    # 📷 CAMERA LOOP
+    # =========================
     def update_camera(self):
-        frame1, frame2, info1, info2 = self.controller.get_frames()
+        frame, info = self.controller.get_frame()
 
-        if frame1 is not None:
-            frame1 = cv2.resize(frame1, (320, 240))  # ✅ FIX ukuran
-            img1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB)
-            img1 = Image.fromarray(img1)
-            img1 = ImageTk.PhotoImage(img1)
+        if frame is not None:
+            frame = cv2.resize(frame, (480, 320))
 
-            self.cam1_label.imgtk = img1
-            self.cam1_label.configure(image=img1)
+            img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(img)
+            img = ImageTk.PhotoImage(img)
 
-        if frame2 is not None:
-            frame2 = cv2.resize(frame2, (320, 240))  # ✅ HARUS SAMA
-            img2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2RGB)
-            img2 = Image.fromarray(img2)
-            img2 = ImageTk.PhotoImage(img2)
+            self.cam_label.imgtk = img
+            self.cam_label.configure(image=img)
 
-            self.cam2_label.imgtk = img2
-            self.cam2_label.configure(image=img2)
+            label = info.get("label")
+            distance = info.get("distance")
 
-            # CAMERA 1
-            lines1 = []
-            for i, d in enumerate(info1["car_distances"], start=1):
-                lines1.append(f"Mobil {i} Jarak {d:.1f} m")
+            # =========================
+            # 🔥 FIX: JANGAN HILANGIN DATA
+            # =========================
+            if label is not None and distance is not None:
+                self.last_label = label.upper()
+                self.last_distance = f"{distance:.2f} meter"
 
-            for i, d in enumerate(info1["motor_distances"], start=1):
-                lines1.append(f"Motor {i} Jarak {d:.1f} m")
+                # kirim serial (optional)
+                if time.time() - self.last_send > 0.5:
+                    self.serial.send({
+                        "object": label,
+                        "distance": round(distance, 2)
+                    })
+                    self.last_send = time.time()
 
-            # CAMERA 2
-            lines2 = []
-            for i, d in enumerate(info2["car_distances"], start=1):
-                lines2.append(f"Mobil {i} Jarak {d:.1f} m")
+            # selalu tampilkan last value
+            self.object_label.config(text=self.last_label)
+            self.distance_label.config(text=self.last_distance)
 
-            for i, d in enumerate(info2["motor_distances"], start=1):
-                lines2.append(f"Motor {i} Jarak {d:.1f} m")
+        self.after(30, self.update_camera)
 
-            # tampilkan
-            self.info_left.config(
-                text="\n".join(lines1) if lines1 else "Tidak ada kendaraan"
+    # =========================
+    def handle_serial_data(self, data):
+        if "lat" in data:
+            text = (
+                f"Lat   : {data['lat']}\n"
+                f"Lon   : {data['lon']}\n"
+                f"Sat   : {data['sat']}\n"
+                f"Speed : {data['speed']}\n"
+                f"Status: {data['status']}"
             )
 
-            self.info_right.config(
-                text="\n".join(lines2) if lines2 else "Tidak ada kendaraan"
-            )
-
-        self.after(10, self.update_camera)
-
+            self.after(0, lambda: self.gps_label.config(text=text))
