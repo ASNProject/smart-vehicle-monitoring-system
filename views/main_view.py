@@ -104,7 +104,7 @@ class MainView(tk.Tk):
 
         self.last_send = 0
 
-        # self.update_camera()
+        self.update_camera()
 
     # =========================
     def send_a(self):
@@ -113,44 +113,44 @@ class MainView(tk.Tk):
     def send_b(self):
         self.serial.send_raw("B")
 
-    # def update_camera(self):
-    #     frame, info = self.controller.get_frame()
-    #
-    #     if frame is not None:
-    #         # frame = cv2.resize(frame, (480, 320))
-    #         width = self.cam_label.winfo_width()
-    #         height = self.cam_label.winfo_height()
-    #
-    #         if width > 0 and height > 0:
-    #             frame = cv2.resize(frame, (width, height))
-    #
-    #         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    #         img = Image.fromarray(img)
-    #         img = ImageTk.PhotoImage(img)
-    #
-    #         self.cam_label.imgtk = img
-    #         self.cam_label.configure(image=img)
-    #
-    #         label = info.get("label")
-    #         distance = info.get("distance")
-    #
-    #         if label is not None and distance is not None:
-    #             self.last_label = label.upper()
-    #             self.last_distance = f"{distance:.2f} meter"
-    #
-    #             # kirim serial (optional)
-    #             if time.time() - self.last_send > 0.5:
-    #                 self.serial.send({
-    #                     "object": label,
-    #                     "distance": round(distance, 2)
-    #                 })
-    #                 self.last_send = time.time()
-    #
-    #         # selalu tampilkan last value
-    #         self.object_label.config(text=self.last_label)
-    #         self.distance_label.config(text=self.last_distance)
-    #
-    #     self.after(30, self.update_camera)
+    def update_camera(self):
+        frame, info = self.controller.get_frame()
+
+        if frame is not None:
+            # frame = cv2.resize(frame, (480, 320))
+            width = self.cam_label.winfo_width()
+            height = self.cam_label.winfo_height()
+
+            if width > 0 and height > 0:
+                frame = cv2.resize(frame, (width, height))
+
+            img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(img)
+            img = ImageTk.PhotoImage(img)
+
+            self.cam_label.imgtk = img
+            self.cam_label.configure(image=img)
+
+            label = info.get("label")
+            distance = info.get("distance")
+
+            if label is not None and distance is not None:
+                self.last_label = label.upper()
+                self.last_distance = f"{distance:.2f} meter"
+
+                # kirim serial (optional)
+                if time.time() - self.last_send > 0.5:
+                    self.serial.send({
+                        "object": label,
+                        "distance": round(distance, 2)
+                    })
+                    self.last_send = time.time()
+
+            # selalu tampilkan last value
+            self.object_label.config(text=self.last_label)
+            self.distance_label.config(text=self.last_distance)
+
+        self.after(30, self.update_camera)
 
     # =========================
     def handle_serial_data(self, data):
