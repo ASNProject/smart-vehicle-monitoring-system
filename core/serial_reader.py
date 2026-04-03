@@ -4,7 +4,7 @@ import json
 
 
 class SerialReader:
-    def __init__(self, port="/dev/cu.usbserial-110", baudrate=115200, callback=None):
+    def __init__(self, port="/dev/serial10", baudrate=115200, callback=None):
         self.ser = serial.Serial(port, baudrate, timeout=1)
         self.ser.reset_input_buffer()
         self.callback = callback
